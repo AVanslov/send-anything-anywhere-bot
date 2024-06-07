@@ -1,4 +1,4 @@
-# SEND ANYTING ANYWHERE BOT
+# SEND ANYTHING ANYWHERE BOT
 
 This is a telegram bot that allows you to find a person who is going somewhere or flying and can take something with him that needs to be transmitted.
 
