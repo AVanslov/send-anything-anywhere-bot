@@ -1,0 +1,1 @@
+SAY_HI = 'Hello, {}'
