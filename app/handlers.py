@@ -1,9 +1,10 @@
 from aiogram import F, html, Router
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, StateFilter
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 import app.keyboards as kb
+from app import calendar
 from app.states import SendersData
 
 router = Router()
@@ -29,19 +30,25 @@ async def send_parcel_handler(callback: CallbackQuery, state: FSMContext) -> Non
     """
     await callback.answer('Давайте скорее найдем перевозчика для вашего груза')
     await state.set_state(SendersData.delivery_date)
-    await callback.message.answer('Введите желаемую дату доставки')
+    await callback.message.answer(
+        'Выберите желаемую дату доставки',
+        reply_markup=calendar.calendar_keyboard
+    )
 
 
-@router.message(SendersData.delivery_date)
-async def senders_data_delivery_date(message: Message, state: FSMContext) -> None:
+@router.callback_query(SendersData.delivery_date, F.data != 'Ignore')
+async def senders_data_delivery_date(callback: CallbackQuery, state: FSMContext) -> None:
     """
     This handler recive a message with delivery date
     save delivery date to data
     and send a request for departure cauntry.
     """
-    await state.update_data(delivery_date=message.text)
+    await state.update_data(delivery_date=callback.data)
+    await callback.message.delete()
+    await callback.message.answer('Укажите страну отправления')
     await state.set_state(SendersData.departure_country)
-    await message.answer('Укажите страну отправления')
+    # добавить inline клавиатуру для выбора первой буквы из названия страны
+    # добавить inline клавиатуру для выбора страны
 
 
 @router.message(SendersData.departure_country)
@@ -54,6 +61,8 @@ async def senders_data_departure_country(message: Message, state: FSMContext) ->
     await state.update_data(departure_country=message.text)
     await state.set_state(SendersData.departure_city)
     await message.answer('Укажите город отправления')
+    # добавить inline клавиатуру для выбора первой буквы из названия города выбранной страны
+    # добавить inline клавиатуру для выбора города
 
 
 @router.message(SendersData.departure_city)
