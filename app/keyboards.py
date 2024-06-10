@@ -54,6 +54,20 @@ main_menu = InlineKeyboardMarkup(
     ]
 )
 
+a = ord('А')
+russian_alphabet = [chr(i) for i in range(a, a+32)]
+
+russian_alphabet_keyboard = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text=i,
+                callback_data=i
+            ) for i in russian_alphabet[i:i + 4]
+        ] for i in range(0, len(russian_alphabet), 4)
+    ]
+)
+
 
 async def years_calendar_keyboard() -> InlineKeyboardMarkup:
     """

@@ -7,11 +7,6 @@ from aiogram.types import (
 
 from .constants import (
     IGNORE,
-    NEXT_YEAR,
-    NEXT_MONTH,
-    PREVIOUS_YEAR,
-    PREVIOUS_MONTH,
-    YEARS,
 )
 
 
@@ -40,10 +35,10 @@ async def months_calendar_buttons() -> list:
     return [
         [
             InlineKeyboardButton(
-                text=str(calendar.month_abbr[month_number]),
-                callback_data=str(month_number)
-            )
-        ] for month_number in range(1, 12)
+                text=str(calendar.month_abbr[column+1*raw]),
+                callback_data=str(column+1*raw)
+            ) for column in range(1, 4)
+        ] for raw in [0, 3, 6, 9]
     ]
 
 
@@ -97,180 +92,53 @@ async def inline_calendar_buttons(date: datetime) -> list:
             ),
         ],
     ]
-
-
-    # разберемся с текущим месяцем
-    # нужно создать список со списками
-    # строк столько же столько недель в месяце
-    # в начале и конце месяца могут быть пустые дни - по факту это дни из предыдущего/следующего месяцев
-    # callback_data должна создержать полностью дату в формате datetime/строки- надо еще подумать что лучше
-
-    # Разабъем на шаги решение данной задачи
-
-
-    # Создадим строку из 7 объектов
-    first_raw = [week_day for week_day in range(1, 8)]
-
-    # Узнаем номер дня недели первого дня текущего месяца
+# узнаем номер дня недели первого дня месяца
     number_of_weekday_of_first_day_of_current_month = datetime(
         date.year,
         date.month,
         1
     ).weekday()
-
-    # нужна формула, по которой можно получить объект datetime из дня недели
-    # получить номер дня месяца, где номер не больше 7, а номер дня недели = i
-
-    numbers_of_days_in_week = {
-        datetime(date.year, date.month, day_number).weekday():
-        datetime(date.year, date.month, day_number)
-        for day_number in range(1, 8)
-    }
-
-    # пройдемся в цикле по списку дней недели и сравним порядковый номер дня недели с индексом первого дня
-    # пока индексы не совпадут, создаем объект с пустой строкой и без действия
-    first_raw_with_inline_buttons = []
-    used_day_numbers = []
-
-    for i, week_day in enumerate(first_raw, 0):
-
-        if i < number_of_weekday_of_first_day_of_current_month:
-            text = ' '
-            callback_data = IGNORE
-
-        elif i == number_of_weekday_of_first_day_of_current_month:
-            text = 1
-            callback_data = datetime(date.year, date.month, 1)
-
-        elif i > number_of_weekday_of_first_day_of_current_month:
-            text = numbers_of_days_in_week[i].day
-            callback_data = numbers_of_days_in_week[i]
-
-        if callback_data != IGNORE:
-            used_day_numbers.append(callback_data)
-
-        first_raw_with_inline_buttons.append(
-            InlineKeyboardButton(text=str(text), callback_data=str(callback_data))
+# Узнаем количество дней в текущем месяце
+    count_of_days_in_current_month = calendar.monthrange(
+        date.year,
+        date.month
+    )[1]
+# узнаем номер дня недели последнего дня месяца
+    number_of_weekday_of_last_day_of_current_month = datetime(
+        date.year,
+        date.month,
+        count_of_days_in_current_month,
+    ).weekday()
+# формируем список от 1 до количества дней в месяце
+    all_days_in_month = [
+        i for i in range(
+            1,
+            count_of_days_in_current_month + 1
         )
+    ]
+# добавляем в начало количество = номеру недели первого дня месяца
+    for i in range(1, number_of_weekday_of_first_day_of_current_month + 1):
+        all_days_in_month.insert(0, ' ')
+# добавляем в конец количество = 7 - номер дня недели последнего дня месяца
+    for i in range(1, 8 - number_of_weekday_of_last_day_of_current_month):
+        all_days_in_month.append(' ')
+# делим список на подсписки
+    raw_with_inline_buttons = [
+            [
+                InlineKeyboardButton(
+                    text=str(date),
+                    callback_data=IGNORE
+                ) if date == ' ' else
+                # добавляем к inline_keyboard список с подсписками
+                # у добавленных дней с указываем callback_data = 'Ignore'
+                InlineKeyboardButton(
+                    text=str(date),
+                    callback_data=str(date)
+                ) for date in all_days_in_month[i:i + 7]
+            ] for i in range(0, len(all_days_in_month), 7)
+        ]
 
-    inline_keyboard.append(first_raw_with_inline_buttons)
-
-
-    # цикл для каждой недели
-    for i in range(1, 6):
-        raw_with_inline_buttons = []
-
-        # получим номер последнего дня текущей недели
-        used_day_numbers[-1]
-        # начнем следующую неделю со следующего дня
-        used_day_numbers[-1].day + 1
-        # также поступим с 3 неделей, 4 и тд.
-
-        # получим последний день текущего месяца / количество дней в месяце
-
-        count_of_days_in_current_month = calendar.monthrange(
-            date.year,
-            date.month
-        )[1]
-
-        # если в теущей неделе нет последнего дня месяца или есть, но последний день месяца - воскресенье:
-
-        for day_number in range(
-            # получим номер дня понедельника на основе последнего дня предыдущей недели
-            used_day_numbers[-1].day + 1,
-            # получим номер дня воскресенья
-            used_day_numbers[-1].day + 8
-        ):
-            # ограничим цикл только существующими числами месяца
-            if day_number <= count_of_days_in_current_month:
-                # условие, что в этом диапазоне нет номера == последний день месяца или есть, но его индекс 7 - воскресенье:
-                if datetime(
-                    date.year,
-                    date.month,
-                    count_of_days_in_current_month
-                ) not in [
-                    datetime(date.year, date.month, day)
-                    for day in range(
-                        used_day_numbers[-1].day + 1, used_day_numbers[-1].day + 8
-                    ) if day <= count_of_days_in_current_month
-                ] or (
-                    datetime(
-                        date.year,
-                        date.month,
-                        count_of_days_in_current_month
-                    ) in [
-                        datetime(date.year, date.month, day)
-                        for day in range(
-                            used_day_numbers[-1].day + 1,
-                            used_day_numbers[-1].day + 8
-                        ) if day <= count_of_days_in_current_month
-                    ]
-                    and datetime(
-                        date.year,
-                        date.month,
-                        count_of_days_in_current_month
-                    ).weekday() == 7
-                ):
-                    # заполняем все дни
-                    text = datetime(date.year, date.month, day_number).day
-                    callback_data = datetime(date.year, date.month, day_number)
-
-                    used_day_numbers.append(callback_data)
-
-                # если в текущей неделе есть последний день месяца:
-                    # то все дни недели с индексом больше,
-                    # чем номер дня недели последнего дня месяца,
-                    # имеют text = ' ' и callback_data = IGNORE
-                elif (
-                    datetime(
-                        date.year,
-                        date.month,
-                        count_of_days_in_current_month
-                    ) in [
-                        datetime(
-                            date.year,
-                            date.month,
-                            day
-                        ) for day in range(
-                            used_day_numbers[-1].day + 1,
-                            used_day_numbers[-1].day + 8
-                        ) if day <= count_of_days_in_current_month
-                    ]
-                ) and (
-                    datetime(
-                        date.year,
-                        date.month,
-                        day_number
-                    ).weekday() != datetime(
-                        date.year,
-                        date.month,
-                        count_of_days_in_current_month
-                    ).weekday() + 1
-                ):
-                    text = datetime(
-                        date.year,
-                        date.month,
-                        day_number
-                    ).day
-                    callback_data = datetime(
-                        date.year,
-                        date.month,
-                        day_number
-                    )
-
-                    used_day_numbers.append(callback_data)
-
-                else:
-                    text = ' '
-                    callback_data = IGNORE
-
-                raw_with_inline_buttons.append(
-                    InlineKeyboardButton(
-                        text=str(text),
-                        callback_data=str(callback_data)
-                    )
-                )
-
-        inline_keyboard.append(raw_with_inline_buttons)
+    for i in raw_with_inline_buttons:
+        inline_keyboard.append(i)
 
     return inline_keyboard

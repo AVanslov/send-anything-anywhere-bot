@@ -5,7 +5,7 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
-from app.constants import IGNORE, YEARS, MONTHS
+from app.constants import IGNORE
 import app.keyboards as kb
 from app.states import SendersData
 
@@ -24,7 +24,9 @@ async def command_start_handler(message: Message) -> None:
 
 
 @router.callback_query(F.data == 'want_to_send')
-async def send_parcel_handler(callback: CallbackQuery, state: FSMContext) -> None:
+async def send_parcel_handler(
+    callback: CallbackQuery, state: FSMContext
+) -> None:
     """
     This handler recive calback data 'want_to_send'
     and starts the procedure for creating
@@ -40,7 +42,9 @@ async def send_parcel_handler(callback: CallbackQuery, state: FSMContext) -> Non
 
 
 @router.callback_query(SendersData.delivery_date_year)
-async def senders_data_delivery_date_year(callback: CallbackQuery, state: FSMContext) -> None:
+async def senders_data_delivery_date_year(
+    callback: CallbackQuery, state: FSMContext
+) -> None:
     """
     Show Inline buttons with months.
     """
@@ -48,15 +52,21 @@ async def senders_data_delivery_date_year(callback: CallbackQuery, state: FSMCon
     await callback.message.delete()
     await callback.answer('Выберите месяц')
     await state.set_state(SendersData.delivery_date_month)
+    data = await state.get_data()
     await callback.message.answer(
-        'Выберите желаемую дату доставки',
-        # нужно передавать год
+        (
+            'Выберите желаемую дату доставки\nВы выбрали:\nГод - {year}'
+        ).format(
+            year=data['delivery_date_year'],
+        ),
         reply_markup=await kb.months_calendar_keyboard()
     )
 
 
 @router.callback_query(SendersData.delivery_date_month)
-async def senders_data_delivery_date_month(callback: CallbackQuery, state: FSMContext) -> None:
+async def senders_data_delivery_date_month(
+    callback: CallbackQuery, state: FSMContext
+) -> None:
     """
     Show Inline buttons of days for selected year and month.
     """
@@ -66,7 +76,13 @@ async def senders_data_delivery_date_month(callback: CallbackQuery, state: FSMCo
     await state.set_state(SendersData.delivery_date)
     data = await state.get_data()
     await callback.message.answer(
-        'Выберите желаемую дату доставки',
+        (
+            'Выберите желаемую дату доставки\nВы выбрали:\n'
+            'Год - {year}, месяц - {month}'
+        ).format(
+            year=data['delivery_date_year'],
+            month=data['delivery_date_month']
+        ),
         reply_markup=await kb.calendar_keyboard(
             date=datetime(
                 int(data['delivery_date_year']),
@@ -77,9 +93,10 @@ async def senders_data_delivery_date_month(callback: CallbackQuery, state: FSMCo
     )
 
 
-
 @router.callback_query(SendersData.delivery_date, F.data != IGNORE)
-async def senders_data_delivery_date(callback: CallbackQuery, state: FSMContext) -> None:
+async def senders_data_delivery_date(
+    callback: CallbackQuery, state: FSMContext
+) -> None:
     """
     This handler recive a message with delivery date
     save delivery date to data
@@ -87,14 +104,19 @@ async def senders_data_delivery_date(callback: CallbackQuery, state: FSMContext)
     """
     await state.update_data(delivery_date=callback.data)
     await callback.message.delete()
-    await callback.message.answer('Укажите страну отправления')
     await state.set_state(SendersData.departure_country)
+    await callback.message.answer(
+        'Укажите страну отправления',
+        reply_markup=kb.russian_alphabet_keyboard
+    )
     # добавить inline клавиатуру для выбора первой буквы из названия страны
     # добавить inline клавиатуру для выбора страны
 
 
 @router.message(SendersData.departure_country)
-async def senders_data_departure_country(message: Message, state: FSMContext) -> None:
+async def senders_data_departure_country(
+    message: Message, state: FSMContext
+) -> None:
     """
     This handler recive a message with departure country
     save departure country to data
@@ -108,7 +130,9 @@ async def senders_data_departure_country(message: Message, state: FSMContext) ->
 
 
 @router.message(SendersData.departure_city)
-async def senders_data_departure_city(message: Message, state: FSMContext) -> None:
+async def senders_data_departure_city(
+    message: Message, state: FSMContext
+) -> None:
     """
     This handler recive a message with departure_city
     save departure_city to data
@@ -120,7 +144,9 @@ async def senders_data_departure_city(message: Message, state: FSMContext) -> No
 
 
 @router.message(SendersData.arrival_country)
-async def senders_data_arrival_country(message: Message, state: FSMContext) -> None:
+async def senders_data_arrival_country(
+    message: Message, state: FSMContext
+) -> None:
     """
     This handler recive a message with arrival_country
     save arrival_country to data
@@ -132,7 +158,9 @@ async def senders_data_arrival_country(message: Message, state: FSMContext) -> N
 
 
 @router.message(SendersData.arrival_city)
-async def senders_data_arrival_city(message: Message, state: FSMContext) -> None:
+async def senders_data_arrival_city(
+    message: Message, state: FSMContext
+) -> None:
     """
     This handler recive a message with arrival_city
     save arrival_city to data
@@ -144,7 +172,9 @@ async def senders_data_arrival_city(message: Message, state: FSMContext) -> None
 
 
 @router.message(SendersData.type_of_reward)
-async def senders_data_type_of_reward(message: Message, state: FSMContext) -> None:
+async def senders_data_type_of_reward(
+    message: Message, state: FSMContext
+) -> None:
     """
     This handler recive a message with type_of_reward
     save type_of_reward to data

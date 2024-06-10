@@ -14,3 +14,13 @@ class SendersData(StatesGroup):
     weight = State()
     cargo_type = State()
     transport = State()
+
+
+class CountrySelect(StatesGroup):
+    first_latter = State()
+    country_name = State()
+
+
+class CitySelect(StatesGroup):
+    first_latter = State()
+    city_name = State()
