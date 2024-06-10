@@ -125,7 +125,8 @@ async def senders_data_departure_country(
     await state.update_data(departure_country=message.text)
     await state.set_state(SendersData.departure_city)
     await message.answer('Укажите город отправления')
-    # добавить inline клавиатуру для выбора первой буквы из названия города выбранной страны
+    # добавить inline клавиатуру для выбора первой
+    # буквы из названия города выбранной страны
     # добавить inline клавиатуру для выбора города
 
 
