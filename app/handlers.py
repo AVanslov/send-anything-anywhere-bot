@@ -1,10 +1,12 @@
+from datetime import datetime
+
 from aiogram import F, html, Router
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
+from app.constants import IGNORE, YEARS, MONTHS
 import app.keyboards as kb
-from app import calendar
 from app.states import SendersData
 
 router = Router()
@@ -29,14 +31,54 @@ async def send_parcel_handler(callback: CallbackQuery, state: FSMContext) -> Non
     an announcement about the need to send a parcel.
     """
     await callback.answer('Давайте скорее найдем перевозчика для вашего груза')
-    await state.set_state(SendersData.delivery_date)
+    await callback.message.delete()
+    await state.set_state(SendersData.delivery_date_year)
     await callback.message.answer(
         'Выберите желаемую дату доставки',
-        reply_markup=calendar.calendar_keyboard
+        reply_markup=await kb.years_calendar_keyboard()
     )
 
 
-@router.callback_query(SendersData.delivery_date, F.data != 'Ignore')
+@router.callback_query(SendersData.delivery_date_year)
+async def senders_data_delivery_date_year(callback: CallbackQuery, state: FSMContext) -> None:
+    """
+    Show Inline buttons with months.
+    """
+    await state.update_data(delivery_date_year=callback.data)
+    await callback.message.delete()
+    await callback.answer('Выберите месяц')
+    await state.set_state(SendersData.delivery_date_month)
+    await callback.message.answer(
+        'Выберите желаемую дату доставки',
+        # нужно передавать год
+        reply_markup=await kb.months_calendar_keyboard()
+    )
+
+
+@router.callback_query(SendersData.delivery_date_month)
+async def senders_data_delivery_date_month(callback: CallbackQuery, state: FSMContext) -> None:
+    """
+    Show Inline buttons of days for selected year and month.
+    """
+    await state.update_data(delivery_date_month=callback.data)
+    await callback.message.delete()
+    await callback.answer('Выберите день')
+    await state.set_state(SendersData.delivery_date)
+    data = await state.get_data()
+    await callback.message.answer(
+        'Выберите желаемую дату доставки',
+        reply_markup=await kb.calendar_keyboard(
+            date=datetime(
+                int(data['delivery_date_year']),
+                int(data['delivery_date_month']),
+                1
+            )
+        )
+    )
+
+
+
+@router.callback_query(SendersData.delivery_date, F.data != IGNORE)
 async def senders_data_delivery_date(callback: CallbackQuery, state: FSMContext) -> None:
     """
     This handler recive a message with delivery date

@@ -1,7 +1,11 @@
+from datetime import datetime
+
 from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup
 )
+
+from . import calendar
 
 main_menu = InlineKeyboardMarkup(
     inline_keyboard=[
@@ -49,3 +53,32 @@ main_menu = InlineKeyboardMarkup(
         ],
     ]
 )
+
+
+async def years_calendar_keyboard() -> InlineKeyboardMarkup:
+    """
+    Return InlineKeyboardMarkup with calendar buttons
+    for current and next years.
+    """
+    return InlineKeyboardMarkup(
+        inline_keyboard=await calendar.years_calendar_buttons()
+    )
+
+
+async def months_calendar_keyboard() -> InlineKeyboardMarkup:
+    """
+    Return InlineKeyboardMarkup with calendar buttons for months.
+    """
+    return InlineKeyboardMarkup(
+        inline_keyboard=await calendar.months_calendar_buttons()
+    )
+
+
+async def calendar_keyboard(date: datetime) -> InlineKeyboardMarkup:
+    """
+    Return InlineKeyboardMarkup with calendar buttons for selected date.
+    """
+
+    return InlineKeyboardMarkup(
+        inline_keyboard=await calendar.inline_calendar_buttons(date)
+    )

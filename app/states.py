@@ -2,6 +2,8 @@ from aiogram.fsm.state import State, StatesGroup
 
 
 class SendersData(StatesGroup):
+    delivery_date_year = State()
+    delivery_date_month = State()
     delivery_date = State()
     departure_country = State()
     departure_city = State()
