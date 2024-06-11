@@ -1,5 +1,9 @@
 # SEND ANYTHING ANYWHERE BOT
 
+> [!NOTE]
+> At the moment, the repository is open only for acquaintance with the code for HR, reviewers, team leaders and potential customers.
+> The bot is currently under development and has not yet been launched on the production server. As soon as the bot is launched, this message will be deleted.
+
 This is a telegram bot that allows you to find a person who is going somewhere or flying and can take something with him that needs to be transmitted.
 
 [![Telegram](https://img.shields.io/badge/-Send_Anything_Anywhere_Bot-black?style=for-the-badge&logo=Telegram)](https://t.me/SendAnythingAnywhereBot)
