@@ -5,7 +5,11 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
-from app.constants import IGNORE
+from app.constants import (
+    ALPHABET_EN,
+    # ALPHABET_RU,
+    IGNORE,
+)
 import app.keyboards as kb
 from app.states import SendersData
 
@@ -104,30 +108,56 @@ async def senders_data_delivery_date(
     """
     await state.update_data(delivery_date=callback.data)
     await callback.message.delete()
-    await state.set_state(SendersData.departure_country)
+    await state.set_state(SendersData.departure_country_letter)
     await callback.message.answer(
         'Укажите страну отправления',
-        reply_markup=kb.russian_alphabet_keyboard
+        # добавляем inline клавиатуру для выбора первой
+        # буквы из названия страны
+        reply_markup=await kb.make_inline_keyboard(ALPHABET_EN, 4)
     )
-    # добавить inline клавиатуру для выбора первой буквы из названия страны
-    # добавить inline клавиатуру для выбора страны
+    # добавляем inline клавиатуру для выбора страны
 
 
-@router.message(SendersData.departure_country)
-async def senders_data_departure_country(
-    message: Message, state: FSMContext
+@router.callback_query(SendersData.departure_country_letter)
+async def senders_data_departure_country_letter(
+    callback: CallbackQuery, state: FSMContext
 ) -> None:
     """
-    This handler recive a message with departure country
+    This handler recive a message with first letter of
+    departure country
+    show buttons with countries
     save departure country to data
     and send a request for departure_city.
     """
-    await state.update_data(departure_country=message.text)
+    await state.update_data(departure_country_letter=callback.data)
+    await callback.message.delete()
+    await state.set_state(SendersData.departure_country)
+    data = await state.get_data()
+    await callback.message.answer(
+        'Укажите страну отправления',
+        reply_markup=await kb.countries(data['departure_country_letter'])
+    )
+
+
+@router.callback_query(SendersData.departure_country)
+async def senders_data_departure_country(
+    callback: CallbackQuery, state: FSMContext
+) -> None:
+    """
+    This handler recive a message with name of
+    departure country
+    show buttons with cities of this country,
+    save departure country to data
+    and send a request for departure_city.
+    """
+    await state.update_data(departure_country=callback.data)
+    await callback.message.delete()
     await state.set_state(SendersData.departure_city)
-    await message.answer('Укажите город отправления')
-    # добавить inline клавиатуру для выбора первой
-    # буквы из названия города выбранной страны
-    # добавить inline клавиатуру для выбора города
+    data = await state.get_data()
+    await callback.message.answer(
+        'Укажите город отправления',
+        reply_markup=await kb.cities(data['departure_country'])
+    )
 
 
 @router.message(SendersData.departure_city)

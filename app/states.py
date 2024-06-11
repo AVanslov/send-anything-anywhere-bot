@@ -5,7 +5,9 @@ class SendersData(StatesGroup):
     delivery_date_year = State()
     delivery_date_month = State()
     delivery_date = State()
+    departure_country_letter = State()
     departure_country = State()
+    departure_city_letter = State()
     departure_city = State()
     arrival_country = State()
     arrival_city = State()
@@ -14,13 +16,3 @@ class SendersData(StatesGroup):
     weight = State()
     cargo_type = State()
     transport = State()
-
-
-class CountrySelect(StatesGroup):
-    first_latter = State()
-    country_name = State()
-
-
-class CitySelect(StatesGroup):
-    first_latter = State()
-    city_name = State()

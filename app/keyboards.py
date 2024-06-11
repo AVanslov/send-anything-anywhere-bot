@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 
 from aiogram.types import (
     InlineKeyboardButton,
@@ -54,19 +55,44 @@ main_menu = InlineKeyboardMarkup(
     ]
 )
 
-a = ord('А')
-russian_alphabet = [chr(i) for i in range(a, a+32)]
 
-russian_alphabet_keyboard = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [
-            InlineKeyboardButton(
-                text=i,
-                callback_data=i
-            ) for i in russian_alphabet[i:i + 4]
-        ] for i in range(0, len(russian_alphabet), 4)
-    ]
-)
+async def make_inline_keyboard(data: list, raws: int) -> InlineKeyboardMarkup:
+    """
+    Receives a list as input and divides it into lists
+    by the specified number of elements,
+    then forms a keyboard layout object in the form of a grid.
+    """
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=i,
+                    callback_data=i
+                ) for i in data[i:i + raws]
+            ] for i in range(0, len(data), raws)
+        ]
+    )
+
+
+async def countries(first_letter: str) -> InlineKeyboardMarkup:
+    # фильтруем список ключей из json со странами
+    # и городами по первой букве ключа
+    with open("all_countries_and_cities.json", "r") as fh:
+        countries_and_cities = json.load(fh)
+    countries = [i for i in countries_and_cities.keys()]
+    return await make_inline_keyboard(
+        [i for i in countries if i[:1] == first_letter], 2
+    )
+
+
+async def cities(country: str) -> InlineKeyboardMarkup:
+    with open("all_countries_and_cities.json", "r") as fh:
+        countries_and_cities = json.load(fh)
+    for key, cities_of_current_country in countries_and_cities.items():
+        if key == country:
+            return await make_inline_keyboard(
+                [i for i in cities_of_current_country], 2
+            )
 
 
 async def years_calendar_keyboard() -> InlineKeyboardMarkup:
