@@ -7,6 +7,7 @@ from aiogram.fsm.context import FSMContext
 
 from app.constants import (
     ALPHABET_EN,
+    CURRENCIES,
     # ALPHABET_RU,
     IGNORE,
 )
@@ -23,7 +24,7 @@ async def command_start_handler(message: Message) -> None:
     """
     await message.answer(
         f"Hello, {html.bold(message.from_user.full_name)}!",
-        reply_markup=kb.main_menu
+        reply_markup=await kb.main_menu()
     )
 
 
@@ -106,8 +107,16 @@ async def senders_data_delivery_date(
     save delivery date to data
     and send a request for departure cauntry.
     """
-    await state.update_data(delivery_date=callback.data)
+    data = await state.get_data()
+    await state.update_data(
+        delivery_date=datetime(
+            int(data['delivery_date_year']),
+            int(data['delivery_date_month']),
+            int(callback.data)
+        )
+    )
     await callback.message.delete()
+    await callback.answer('Выберите первую букву из названия страны')
     await state.set_state(SendersData.departure_country_letter)
     await callback.message.answer(
         'Укажите страну отправления',
@@ -131,6 +140,7 @@ async def senders_data_departure_country_letter(
     """
     await state.update_data(departure_country_letter=callback.data)
     await callback.message.delete()
+    await callback.answer('Выберите страну')
     await state.set_state(SendersData.departure_country)
     data = await state.get_data()
     await callback.message.answer(
@@ -152,6 +162,7 @@ async def senders_data_departure_country(
     """
     await state.update_data(departure_country=callback.data)
     await callback.message.delete()
+    await callback.answer('Выберите город')
     await state.set_state(SendersData.departure_city)
     data = await state.get_data()
     await callback.message.answer(
@@ -160,8 +171,28 @@ async def senders_data_departure_country(
     )
 
 
-@router.message(SendersData.departure_city)
+@router.callback_query(SendersData.departure_city)
 async def senders_data_departure_city(
+    callback: CallbackQuery, state: FSMContext
+) -> None:
+    """
+    This handler recive a message with departure_city
+    save departure_city to data
+    and send a request for departure_details.
+    """
+    await state.update_data(departure_city=callback.data)
+    await callback.message.delete()
+    await callback.answer('Укажите дополнительную информацию об отправке.')
+    await state.set_state(SendersData.departure_details)
+    await callback.message.answer(
+        'Дополнительная информация, например,'
+        'где нужно забрать посылку - вы сами привезете её к перевозчику,'
+        'в аэропорт или перевозчик должен заехать к вам и тд. и т.п.'
+    )
+
+
+@router.message(SendersData.departure_details)
+async def senders_data_departure_details(
     message: Message, state: FSMContext
 ) -> None:
     """
@@ -169,51 +200,197 @@ async def senders_data_departure_city(
     save departure_city to data
     and send a request for arrival_country.
     """
-    await state.update_data(departure_city=message.text)
-    await state.set_state(SendersData.arrival_country)
-    await message.answer('Укажите страну прибытия')
+    await state.update_data(departure_details=message.text)
+    await state.set_state(SendersData.arrival_country_letter)
+    await message.answer(
+        'Укажите страну прибытия',
+        reply_markup=await kb.make_inline_keyboard(ALPHABET_EN, 4)
+    )
 
 
-@router.message(SendersData.arrival_country)
-async def senders_data_arrival_country(
-    message: Message, state: FSMContext
+@router.callback_query(SendersData.arrival_country_letter)
+async def senders_data_arrival_country_letter(
+    callback: CallbackQuery, state: FSMContext
 ) -> None:
     """
     This handler recive a message with arrival_country
     save arrival_country to data
     and send a request for type_of_reward.
     """
-    await state.update_data(arrival_country=message.text)
+    await state.update_data(arrival_country_letter=callback.data)
+    await callback.message.delete()
+    await state.set_state(SendersData.arrival_country)
+    data = await state.get_data()
+    await callback.message.answer(
+        'Укажите страну прибытия',
+        reply_markup=await kb.countries(data['arrival_country_letter'])
+    )
+
+
+@router.callback_query(SendersData.arrival_country)
+async def senders_data_arrival_country(
+    callback: CallbackQuery, state: FSMContext
+) -> None:
+    """
+    This handler recive a message with arrival_country
+    save arrival_country to data
+    and send a request for arrival_city.
+    """
+    await state.update_data(arrival_country=callback.data)
+    await callback.message.delete()
     await state.set_state(SendersData.arrival_city)
-    await message.answer('Укажите город прибытия')
+    data = await state.get_data()
+    await callback.message.answer(
+        'Укажите город прибытия',
+        reply_markup=await kb.cities(data['arrival_country'])
+    )
 
 
-@router.message(SendersData.arrival_city)
+@router.callback_query(SendersData.arrival_city)
 async def senders_data_arrival_city(
-    message: Message, state: FSMContext
+    callback: CallbackQuery, state: FSMContext
 ) -> None:
     """
     This handler recive a message with arrival_city
     save arrival_city to data
     and send a request for type_of_reward.
     """
-    await state.update_data(arrival_city=message.text)
-    await state.set_state(SendersData.type_of_reward)
-    await message.answer('Укажите тип вознаграждения')
+    await state.update_data(arrival_city=callback.data)
+    await callback.message.delete()
+    await callback.answer('Укажите дополнительную информацию о вручении.')
+    await state.set_state(SendersData.arrival_details)
+    await callback.message.answer(
+        'Дополнительная информация, например,'
+        'eсть ли доп. требования: отправить по почте, передать в аэропорту и тд. и тп.'
+    )
 
 
-@router.message(SendersData.type_of_reward)
-async def senders_data_type_of_reward(
+@router.message(SendersData.arrival_details)
+async def senders_data_arrival_details(
     message: Message, state: FSMContext
+) -> None:
+    """
+    This handler recive a message with arrival_details
+    save arrival_details to data
+    and send a request for type_of_reward.
+    """
+    await state.update_data(arrival_details=message.text)
+    await state.set_state(SendersData.type_of_reward)
+    await message.answer(
+        'Укажите тип вознаграждения',
+        reply_markup=await kb.type_of_reward()
+    )
+    # Показываем выбор типа
+        # деньги
+            # показываем выбор валюты
+            # показываем поле ввода цифр
+        # Другое
+            # показываем текстовое поле
+
+
+@router.callback_query(SendersData.type_of_reward, F.data == 'money')
+async def senders_data_type_of_reward(
+    callback: CallbackQuery, state: FSMContext
 ) -> None:
     """
     This handler recive a message with type_of_reward
     save type_of_reward to data
+    and send a currency selection request.
+    """
+    await state.update_data(type_of_reward=callback.data)
+    await callback.message.delete()
+    await callback.answer('Выбор валюты')
+    await state.set_state(SendersData.type_of_reward_currency)
+    await callback.message.answer(
+        'Выберите валюту',
+        reply_markup=await kb.make_inline_keyboard(CURRENCIES, 2)
+    )
+
+
+@router.callback_query(SendersData.type_of_reward_currency)
+async def senders_data_type_of_reward_currency(
+    callback: CallbackQuery, state: FSMContext
+) -> None:
+    """
+    This handler recive a message with type_of_reward_currency
+    save type_of_reward_currency to data
+    and send a request for type_of_reward_value.
+    """
+    await state.update_data(type_of_reward_currency=callback.data)
+    await callback.message.delete()
+    await callback.answer('Выбор суммы')
+    await state.set_state(SendersData.type_of_reward_value)
+    await callback.message.answer('Укажите сумму вознаграждения')
+
+
+@router.callback_query(SendersData.type_of_reward, F.data == 'other')
+async def senders_data_type_of_reward_other(
+    callback: CallbackQuery, state: FSMContext
+) -> None:
+    """
+    This handler recive a message with type_of_reward
+    save type_of_reward to data
+    and send a currency selection request.
+    """
+    await state.update_data(type_of_reward=callback.data)
+    await callback.message.delete()
+    await callback.answer('Ввод комментария')
+    await state.set_state(SendersData.type_of_reward_message)
+    await callback.message.answer(
+        'Укажите комментарий к вознагрождению, например:'
+        '"по договорённости",'
+        '"за коробку конфет",'
+        '"бесплатно"'
+        'и ид. и т.п.'
+    )
+
+
+@router.message(SendersData.type_of_reward_message)
+async def senders_data_type_of_reward_message(
+    message: Message, state: FSMContext
+) -> None:
+    """
+    This handler recive a message with type_of_reward_message
+    save type_of_reward_message to data
     and send a request for size.
     """
-    await state.update_data(type_of_reward=message.text)
+    await state.update_data(type_of_reward_message=message.text)
     await state.set_state(SendersData.size)
-    await message.answer('Укажите размер посылки')
+    await message.answer('Укажите габариты посылки')
+    # добавить понятные варианты:
+    # XL - не больше 600 x 350 x 300 mm
+    # L - не больше 310 x 250 x 380 mm
+    # M - не больше 330 x 250 x 155 mm
+    # XS - не больше 170 x 120 x 90 mm
+    # S - не больше 220 x 200 x 110 mm
+    # конверт А2 - не больше 495 x 580 x 50 mm
+    # конверт А3 - не больше 350 x 420 x 50 mm
+    # конверт А4 - не больше 260 x 340 x 50 mm
+    # конверт А5 - не больше 149 x 210 x 50 mm
+
+
+@router.message(SendersData.type_of_reward_value)
+async def senders_data_type_of_reward_value(
+    message: Message, state: FSMContext
+) -> None:
+    """
+    This handler recive a message with type_of_reward_value
+    save type_of_reward_value to data
+    and send a request for size.
+    """
+    await state.update_data(type_of_reward_value=message.text)
+    await state.set_state(SendersData.size)
+    await message.answer('Укажите габариты посылки')
+    # добавить понятные варианты:
+    # XL - не больше 600 x 350 x 300 mm
+    # L - не больше 310 x 250 x 380 mm
+    # M - не больше 330 x 250 x 155 mm
+    # XS - не больше 170 x 120 x 90 mm
+    # S - не больше 220 x 200 x 110 mm
+    # конверт А2 - не больше 495 x 580 x 50 mm
+    # конверт А3 - не больше 350 x 420 x 50 mm
+    # конверт А4 - не больше 260 x 340 x 50 mm
+    # конверт А5 - не больше 149 x 210 x 50 mm
 
 
 @router.message(SendersData.size)
@@ -225,7 +402,7 @@ async def senders_data_size(message: Message, state: FSMContext) -> None:
     """
     await state.update_data(size=message.text)
     await state.set_state(SendersData.weight)
-    await message.answer('Укажите массу посылки')
+    await message.answer('Укажите массу посылки в кг.')
 
 
 @router.message(SendersData.weight)
@@ -238,7 +415,16 @@ async def senders_data_weight(message: Message, state: FSMContext) -> None:
     await state.update_data(weight=message.text)
     await state.set_state(SendersData.cargo_type)
     await message.answer('Укажите тип посылки')
-
+    # документы
+    # личные вещи
+    # одежда
+    # бытовая химия
+    # бьющиеся и хрупкие предметы
+    # продукты питания
+    # лекарства
+    # прочие предметы
+    # добавить шаг про необходимость особого температурного режима
+    # (необходимость термопакета или холодильника)
 
 @router.message(SendersData.cargo_type)
 async def senders_data_cargo_type(message: Message, state: FSMContext) -> None:

@@ -13,9 +13,25 @@ YEARS = {
 MONTHS = {
     str(i) for i in range(1, 13)
 }
+MAIN_MENU_BUTTONS = {
+    'Хочу отправить': 'want_to_send',
+    'Хочу доставить': 'want_to_delivery',
+    'Избранное': 'Favorite',
+    'Посмотреть историю посылок': 'see_orders_history',
+    'Посмотреть доступные направления': 'see_availible_routes',
+    'Сделать донат': 'send_money',
+    'Написать разработчику': 'contact_developer',
+}
+
 a = ord('А')
 ALPHABET_RU = [chr(i) for i in range(a, a+32)]
 
+TYPE_OF_REWARD_BUTTONS = {
+    'Деньги': 'money',
+    'Другое': 'other',
+
+}
+CURRENCIES = ['€', '$', '₩', '¥', 'RSD', '₽']
 
 # получаем ключи словаря
 with open("all_countries_and_cities.json", "r") as fh:
