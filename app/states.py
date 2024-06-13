@@ -13,7 +13,7 @@ class SendersData(StatesGroup):
     arrival_country_letter = State()
     arrival_country = State()
     arrival_city = State()
-    arrival_details = State()  # new
+    arrival_details = State()
     type_of_reward = State()
     type_of_reward_currency = State()
     type_of_reward_value = State()
@@ -22,3 +22,7 @@ class SendersData(StatesGroup):
     weight = State()
     cargo_type = State()
     transport = State()
+
+
+class CarrierData(StatesGroup):
+    date_of_the_trip = State()

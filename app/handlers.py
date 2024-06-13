@@ -241,6 +241,9 @@ async def senders_data_arrival_country(
     await callback.message.delete()
     await state.set_state(SendersData.arrival_city)
     data = await state.get_data()
+    # оценка количества городов
+    # если городов более 20,
+    # показываем алфавитную клавиатуру для выбора города
     await callback.message.answer(
         'Укажите город прибытия',
         reply_markup=await kb.cities(data['arrival_country'])
@@ -354,7 +357,7 @@ async def senders_data_type_of_reward_message(
     await state.set_state(SendersData.size)
     await message.answer(
         'Укажите габариты посылки',
-        reply_markup=await kb.make_inline_keyboard(SIZE, 2)
+        reply_markup=await kb.make_inline_keyboard(SIZE, 1)
     )
 
 
@@ -371,7 +374,7 @@ async def senders_data_type_of_reward_value(
     await state.set_state(SendersData.size)
     await message.answer(
         'Укажите габариты посылки',
-        reply_markup=await kb.make_inline_keyboard(SIZE, 2)
+        reply_markup=await kb.make_inline_keyboard(SIZE, 1)
     )
 
 
@@ -402,7 +405,7 @@ async def senders_data_weight(message: Message, state: FSMContext) -> None:
     await state.set_state(SendersData.cargo_type)
     await message.answer(
         'Укажите тип посылки',
-        reply_markup=await kb.make_inline_keyboard(CARGO_TIPES, 2)
+        reply_markup=await kb.make_inline_keyboard(CARGO_TIPES, 1)
     )
     # добавить шаг про необходимость особого температурного режима
     # (необходимость термопакета или холодильника)
@@ -440,16 +443,62 @@ async def senders_data_transport(
     await callback.message.delete()
     await callback.answer('Отображение полученных данных')
     data = await state.get_data()
+
+    if 'type_of_reward_message' in data.keys():
+        message = (
+            f'Дата отправления: {data["delivery_date"]}\n'
+            f'Страна отправления: {data["departure_country"]}\n'
+            f'Город отправления: {data["departure_city"]}\n'
+            f'Страна прибытия: {data["arrival_country"]}\n'
+            f'Город прибытия: {data["arrival_city"]}\n'
+            f'Тип вознаграждения: {data["type_of_reward"]}\n'
+            f'{data["type_of_reward_message"]}\n'
+            f'Размер посылки: {data["size"]}\n'
+            f'Масса посылки: {data["weight"]}\n'
+            f'Тип посылки: {data["cargo_type"]}\n'
+            f'Предпочитаемый транспорт: {data["transport"]}.'
+        )
+    else:
+        message = (
+            f'Дата отправления: {data["delivery_date"]}\n'
+            f'Страна отправления: {data["departure_country"]}\n'
+            f'Город отправления: {data["departure_city"]}\n'
+            f'Страна прибытия: {data["arrival_country"]}\n'
+            f'Город прибытия: {data["arrival_city"]}\n'
+            f'Тип вознаграждения: {data["type_of_reward"]}\n'
+            f'{data["type_of_reward_currency"]} '
+            f'{data["type_of_reward_value"]}\n'
+            f'Размер посылки: {data["size"]}\n'
+            f'Масса посылки: {data["weight"]}\n'
+            f'Тип посылки: {data["cargo_type"]}\n'
+            f'Предпочитаемый транспорт: {data["transport"]}.'
+        )
+
     await callback.message.answer(
-        f'Дата отправления: {data["delivery_date"]}\n'
-        f'Страна отправления: {data["departure_country"]}\n'
-        f'Город отправления: {data["departure_city"]}\n'
-        f'Страна прибытия: {data["arrival_country"]}\n'
-        f'Город прибытия: {data["arrival_city"]}\n'
-        f'Тип вознаграждения: {data["type_of_reward"]}\n'
-        f'Размер посылки: {data["size"]}\n'
-        f'Масса посылки: {data["weight"]}\n'
-        f'Тип посылки: {data["cargo_type"]}\n'
-        f'Предпочитаемый транспорт: {data["transport"]}.'
+        message,
+        reply_markup=await kb.make_inline_keyboard(
+            ['Редактировать объявление'], 2
+        )
     )
+    # сохранение полученных данны в БД
     await state.clear()
+    await callback.message.answer(
+        'Cписок подходящих объявлений',
+    )
+    # for add in adds:
+    await callback.message.answer(
+        'Рейтинг: ⭐⭐⭐⭐⭐\n'
+        'Отзывов : 10\n'
+        'Выполнено доставок : 10\n'
+        'Маршрут: Белград - Стамбул - Пекин\n'
+        'Дата отправления: \n'
+        'Дата прибытия в Стамбул: \n'
+        'Дата прибытия в Пекин: \n'
+        'Допустимые габариты посылки: \n'
+        'Допустимая масса посылки: \n'
+        'Желаемое вознаграждение: \n'
+        'Допустимое содержимое посылки: ',
+        reply_markup=await kb.make_inline_keyboard(
+            ['Добавить в избранное', 'Отправить посылку'], 1
+        )
+    )
