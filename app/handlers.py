@@ -7,9 +7,11 @@ from aiogram.fsm.context import FSMContext
 
 from app.constants import (
     ALPHABET_EN,
+    CARGO_TIPES,
     CURRENCIES,
-    # ALPHABET_RU,
     IGNORE,
+    SIZE,
+    TRANSPORT,
 )
 import app.keyboards as kb
 from app.states import SendersData
@@ -124,7 +126,6 @@ async def senders_data_delivery_date(
         # буквы из названия страны
         reply_markup=await kb.make_inline_keyboard(ALPHABET_EN, 4)
     )
-    # добавляем inline клавиатуру для выбора страны
 
 
 @router.callback_query(SendersData.departure_country_letter)
@@ -261,7 +262,8 @@ async def senders_data_arrival_city(
     await state.set_state(SendersData.arrival_details)
     await callback.message.answer(
         'Дополнительная информация, например,'
-        'eсть ли доп. требования: отправить по почте, передать в аэропорту и тд. и тп.'
+        'eсть ли доп. требования: отправить по почте,'
+        'передать в аэропорту и тд. и тп.'
     )
 
 
@@ -280,12 +282,6 @@ async def senders_data_arrival_details(
         'Укажите тип вознаграждения',
         reply_markup=await kb.type_of_reward()
     )
-    # Показываем выбор типа
-        # деньги
-            # показываем выбор валюты
-            # показываем поле ввода цифр
-        # Другое
-            # показываем текстовое поле
 
 
 @router.callback_query(SendersData.type_of_reward, F.data == 'money')
@@ -356,17 +352,10 @@ async def senders_data_type_of_reward_message(
     """
     await state.update_data(type_of_reward_message=message.text)
     await state.set_state(SendersData.size)
-    await message.answer('Укажите габариты посылки')
-    # добавить понятные варианты:
-    # XL - не больше 600 x 350 x 300 mm
-    # L - не больше 310 x 250 x 380 mm
-    # M - не больше 330 x 250 x 155 mm
-    # XS - не больше 170 x 120 x 90 mm
-    # S - не больше 220 x 200 x 110 mm
-    # конверт А2 - не больше 495 x 580 x 50 mm
-    # конверт А3 - не больше 350 x 420 x 50 mm
-    # конверт А4 - не больше 260 x 340 x 50 mm
-    # конверт А5 - не больше 149 x 210 x 50 mm
+    await message.answer(
+        'Укажите габариты посылки',
+        reply_markup=await kb.make_inline_keyboard(SIZE, 2)
+    )
 
 
 @router.message(SendersData.type_of_reward_value)
@@ -380,29 +369,26 @@ async def senders_data_type_of_reward_value(
     """
     await state.update_data(type_of_reward_value=message.text)
     await state.set_state(SendersData.size)
-    await message.answer('Укажите габариты посылки')
-    # добавить понятные варианты:
-    # XL - не больше 600 x 350 x 300 mm
-    # L - не больше 310 x 250 x 380 mm
-    # M - не больше 330 x 250 x 155 mm
-    # XS - не больше 170 x 120 x 90 mm
-    # S - не больше 220 x 200 x 110 mm
-    # конверт А2 - не больше 495 x 580 x 50 mm
-    # конверт А3 - не больше 350 x 420 x 50 mm
-    # конверт А4 - не больше 260 x 340 x 50 mm
-    # конверт А5 - не больше 149 x 210 x 50 mm
+    await message.answer(
+        'Укажите габариты посылки',
+        reply_markup=await kb.make_inline_keyboard(SIZE, 2)
+    )
 
 
-@router.message(SendersData.size)
-async def senders_data_size(message: Message, state: FSMContext) -> None:
+@router.callback_query(SendersData.size)
+async def senders_data_size(
+    callback: CallbackQuery, state: FSMContext
+) -> None:
     """
     This handler recive a message with size
     save size to data
     and send a request for weight.
     """
-    await state.update_data(size=message.text)
+    await state.update_data(size=callback.data)
+    await callback.message.delete()
+    await callback.answer('Ввод массы')
     await state.set_state(SendersData.weight)
-    await message.answer('Укажите массу посылки в кг.')
+    await callback.message.answer('Укажите массу посылки в кг.')
 
 
 @router.message(SendersData.weight)
@@ -414,40 +400,47 @@ async def senders_data_weight(message: Message, state: FSMContext) -> None:
     """
     await state.update_data(weight=message.text)
     await state.set_state(SendersData.cargo_type)
-    await message.answer('Укажите тип посылки')
-    # документы
-    # личные вещи
-    # одежда
-    # бытовая химия
-    # бьющиеся и хрупкие предметы
-    # продукты питания
-    # лекарства
-    # прочие предметы
+    await message.answer(
+        'Укажите тип посылки',
+        reply_markup=await kb.make_inline_keyboard(CARGO_TIPES, 2)
+    )
     # добавить шаг про необходимость особого температурного режима
     # (необходимость термопакета или холодильника)
 
-@router.message(SendersData.cargo_type)
-async def senders_data_cargo_type(message: Message, state: FSMContext) -> None:
+
+@router.callback_query(SendersData.cargo_type)
+async def senders_data_cargo_type(
+    callback: CallbackQuery, state: FSMContext
+) -> None:
     """
     This handler recive a message with cargo_type
     save cargo_type to data
     and send a request for transport.
     """
-    await state.update_data(cargo_type=message.text)
+    await state.update_data(cargo_type=callback.data)
+    await callback.message.delete()
+    await callback.answer('Ввод предпочитаемого транспорта')
     await state.set_state(SendersData.transport)
-    await message.answer('Укажите вид предпочитаемого транспорта')
+    await callback.message.answer(
+        'Укажите вид предпочитаемого транспорта',
+        reply_markup=await kb.make_inline_keyboard(TRANSPORT, 2)
+    )
 
 
-@router.message(SendersData.transport)
-async def senders_data_transport(message: Message, state: FSMContext) -> None:
+@router.callback_query(SendersData.transport)
+async def senders_data_transport(
+    callback: CallbackQuery, state: FSMContext
+) -> None:
     """
     This handler recive a message with transport
     save transport to data
     and print all sender`s data like a message.
     """
-    await state.update_data(transport=message.text)
+    await state.update_data(transport=callback.data)
+    await callback.message.delete()
+    await callback.answer('Отображение полученных данных')
     data = await state.get_data()
-    await message.answer(
+    await callback.message.answer(
         f'Дата отправления: {data["delivery_date"]}\n'
         f'Страна отправления: {data["departure_country"]}\n'
         f'Город отправления: {data["departure_city"]}\n'
