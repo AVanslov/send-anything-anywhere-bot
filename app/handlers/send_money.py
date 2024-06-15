@@ -14,24 +14,22 @@ from app.constants import (
 )
 import app.keyboards as kb
 
-favorites_router = Router()
+send_money_router = Router()
 
 
-@favorites_router.callback_query(F.data == 'favorite')
-async def carrier_parcel_handler(
+@send_money_router.callback_query(F.data == 'send_money')
+async def contact_developer_parcel_handler(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
     """
-    This handler recive calback data 'favorite'
-    and starts the procedure for creating
-    an announcement about
-    the ability to deliver a package.
+    This handler recive calback data 'send_money'
+    and starts the procedure of send money.
     """
     await callback.answer(
-        'Давайте посмотрим, что там у нас в избранном.'
+        'Здесь вы можете поблагодарить разработчика за создание сервиса.'
     )
     await callback.message.delete()
     await callback.message.answer(
-        'Избранноре',
+        'Написать разработчику',
         # reply_markup=await kb.years_calendar_keyboard()
     )

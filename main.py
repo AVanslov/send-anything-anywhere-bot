@@ -12,6 +12,11 @@ from app.handlers import (
     start,
     sender,
     carrier,
+    favorites,
+    history,
+    availible_routes,
+    send_money,
+    contact_developer,
 )
 
 load_dotenv()
@@ -29,6 +34,11 @@ async def main() -> None:
         start.start_router,
         sender.sender_router,
         carrier.carrier_router,
+        favorites.favorites_router,
+        history.history_router,
+        availible_routes.availible_routes,
+        send_money.send_money_router,
+        contact_developer.contact_developer_router,
     )
     await dp.start_polling(bot)
 

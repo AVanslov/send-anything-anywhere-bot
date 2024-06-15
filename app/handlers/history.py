@@ -4,34 +4,34 @@ from aiogram import F, Router
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
-from app.constants import (
-    ALPHABET_EN,
-    CARGO_TIPES,
-    CURRENCIES,
-    IGNORE,
-    SIZE,
-    TRANSPORT,
-)
-import app.keyboards as kb
+# from app.constants import (
+#     ALPHABET_EN,
+#     CARGO_TIPES,
+#     CURRENCIES,
+#     IGNORE,
+#     SIZE,
+#     TRANSPORT,
+# )
+# import app.keyboards as kb
 
-favorites_router = Router()
+history_router = Router()
 
 
-@favorites_router.callback_query(F.data == 'favorite')
+@history_router.callback_query(F.data == 'see_orders_history')
 async def carrier_parcel_handler(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
     """
-    This handler recive calback data 'favorite'
+    This handler recive calback data 'see_orders_history'
     and starts the procedure for creating
     an announcement about
     the ability to deliver a package.
     """
     await callback.answer(
-        'Давайте посмотрим, что там у нас в избранном.'
+        'Давайте посмотрим, что мы доставляли и отправляли.'
     )
     await callback.message.delete()
     await callback.message.answer(
-        'Избранноре',
+        'История отправленных и доставленных посылок',
         # reply_markup=await kb.years_calendar_keyboard()
     )
