@@ -1,7 +1,6 @@
 from datetime import datetime
 
-from aiogram import F, html, Router
-from aiogram.filters import CommandStart
+from aiogram import F, Router
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 
@@ -16,21 +15,10 @@ from app.constants import (
 import app.keyboards as kb
 from app.states import SendersData
 
-router = Router()
+sender_router = Router()
 
 
-@router.message(CommandStart())
-async def command_start_handler(message: Message) -> None:
-    """
-    This handler receives messages with `/start` command
-    """
-    await message.answer(
-        f"Hello, {html.bold(message.from_user.full_name)}!",
-        reply_markup=await kb.main_menu()
-    )
-
-
-@router.callback_query(F.data == 'want_to_send')
+@sender_router.callback_query(F.data == 'want_to_send')
 async def send_parcel_handler(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
@@ -48,7 +36,7 @@ async def send_parcel_handler(
     )
 
 
-@router.callback_query(SendersData.delivery_date_year)
+@sender_router.callback_query(SendersData.delivery_date_year)
 async def senders_data_delivery_date_year(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
@@ -70,7 +58,7 @@ async def senders_data_delivery_date_year(
     )
 
 
-@router.callback_query(SendersData.delivery_date_month)
+@sender_router.callback_query(SendersData.delivery_date_month)
 async def senders_data_delivery_date_month(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
@@ -100,7 +88,7 @@ async def senders_data_delivery_date_month(
     )
 
 
-@router.callback_query(SendersData.delivery_date, F.data != IGNORE)
+@sender_router.callback_query(SendersData.delivery_date, F.data != IGNORE)
 async def senders_data_delivery_date(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
@@ -128,7 +116,7 @@ async def senders_data_delivery_date(
     )
 
 
-@router.callback_query(SendersData.departure_country_letter)
+@sender_router.callback_query(SendersData.departure_country_letter)
 async def senders_data_departure_country_letter(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
@@ -150,7 +138,7 @@ async def senders_data_departure_country_letter(
     )
 
 
-@router.callback_query(SendersData.departure_country)
+@sender_router.callback_query(SendersData.departure_country)
 async def senders_data_departure_country(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
@@ -172,7 +160,7 @@ async def senders_data_departure_country(
     )
 
 
-@router.callback_query(SendersData.departure_city)
+@sender_router.callback_query(SendersData.departure_city)
 async def senders_data_departure_city(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
@@ -192,7 +180,7 @@ async def senders_data_departure_city(
     )
 
 
-@router.message(SendersData.departure_details)
+@sender_router.message(SendersData.departure_details)
 async def senders_data_departure_details(
     message: Message, state: FSMContext
 ) -> None:
@@ -209,7 +197,7 @@ async def senders_data_departure_details(
     )
 
 
-@router.callback_query(SendersData.arrival_country_letter)
+@sender_router.callback_query(SendersData.arrival_country_letter)
 async def senders_data_arrival_country_letter(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
@@ -228,7 +216,7 @@ async def senders_data_arrival_country_letter(
     )
 
 
-@router.callback_query(SendersData.arrival_country)
+@sender_router.callback_query(SendersData.arrival_country)
 async def senders_data_arrival_country(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
@@ -243,14 +231,14 @@ async def senders_data_arrival_country(
     data = await state.get_data()
     # оценка количества городов
     # если городов более 20,
-    # показываем алфавитную клавиатуру для выбора города
+    # показываем алфавитную клавиатуру для выбора города / пагинацию
     await callback.message.answer(
         'Укажите город прибытия',
         reply_markup=await kb.cities(data['arrival_country'])
     )
 
 
-@router.callback_query(SendersData.arrival_city)
+@sender_router.callback_query(SendersData.arrival_city)
 async def senders_data_arrival_city(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
@@ -270,7 +258,7 @@ async def senders_data_arrival_city(
     )
 
 
-@router.message(SendersData.arrival_details)
+@sender_router.message(SendersData.arrival_details)
 async def senders_data_arrival_details(
     message: Message, state: FSMContext
 ) -> None:
@@ -287,7 +275,7 @@ async def senders_data_arrival_details(
     )
 
 
-@router.callback_query(SendersData.type_of_reward, F.data == 'money')
+@sender_router.callback_query(SendersData.type_of_reward, F.data == 'money')
 async def senders_data_type_of_reward(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
@@ -306,7 +294,7 @@ async def senders_data_type_of_reward(
     )
 
 
-@router.callback_query(SendersData.type_of_reward_currency)
+@sender_router.callback_query(SendersData.type_of_reward_currency)
 async def senders_data_type_of_reward_currency(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
@@ -322,7 +310,7 @@ async def senders_data_type_of_reward_currency(
     await callback.message.answer('Укажите сумму вознаграждения')
 
 
-@router.callback_query(SendersData.type_of_reward, F.data == 'other')
+@sender_router.callback_query(SendersData.type_of_reward, F.data == 'other')
 async def senders_data_type_of_reward_other(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
@@ -344,7 +332,7 @@ async def senders_data_type_of_reward_other(
     )
 
 
-@router.message(SendersData.type_of_reward_message)
+@sender_router.message(SendersData.type_of_reward_message)
 async def senders_data_type_of_reward_message(
     message: Message, state: FSMContext
 ) -> None:
@@ -361,7 +349,7 @@ async def senders_data_type_of_reward_message(
     )
 
 
-@router.message(SendersData.type_of_reward_value)
+@sender_router.message(SendersData.type_of_reward_value)
 async def senders_data_type_of_reward_value(
     message: Message, state: FSMContext
 ) -> None:
@@ -378,7 +366,7 @@ async def senders_data_type_of_reward_value(
     )
 
 
-@router.callback_query(SendersData.size)
+@sender_router.callback_query(SendersData.size)
 async def senders_data_size(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
@@ -394,7 +382,7 @@ async def senders_data_size(
     await callback.message.answer('Укажите массу посылки в кг.')
 
 
-@router.message(SendersData.weight)
+@sender_router.message(SendersData.weight)
 async def senders_data_weight(message: Message, state: FSMContext) -> None:
     """
     This handler recive a message with weight
@@ -411,7 +399,7 @@ async def senders_data_weight(message: Message, state: FSMContext) -> None:
     # (необходимость термопакета или холодильника)
 
 
-@router.callback_query(SendersData.cargo_type)
+@sender_router.callback_query(SendersData.cargo_type)
 async def senders_data_cargo_type(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
@@ -430,7 +418,7 @@ async def senders_data_cargo_type(
     )
 
 
-@router.callback_query(SendersData.transport)
+@sender_router.callback_query(SendersData.transport)
 async def senders_data_transport(
     callback: CallbackQuery, state: FSMContext
 ) -> None:
