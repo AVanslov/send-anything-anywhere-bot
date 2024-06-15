@@ -32,5 +32,10 @@ async def carrier_parcel_handler(
     await callback.message.answer(
         'Доступные направления\n'
         'Формируем картинку с картой и стрелочками',
-        # reply_markup=await kb.years_calendar_keyboard()
+        reply_markup=await kb.make_inline_keyboard(['menu'], 1)
     )
+
+# пишем функцию, которая
+# получает все пары страна + город отправления + прибытия
+# подключаем бибилиотеку Plotly и строим диаграму с картой и стрелочками
+# сохраняем диаграму в файл

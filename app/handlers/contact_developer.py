@@ -32,5 +32,8 @@ async def contact_developer_parcel_handler(
     await callback.message.delete()
     await callback.message.answer(
         'Написать разработчику',
-        # reply_markup=await kb.years_calendar_keyboard()
+        reply_markup=await kb.make_inline_keyboard(['menu'], 1)
     )
+
+# напишем функцию, которая из бота отправит сообщение
+# с информацией об отправителе админу

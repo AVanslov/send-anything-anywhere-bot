@@ -13,8 +13,9 @@ async def menu_handler(
 ) -> None:
     """
     This handler receives `menu` data
-    return maim menu buttons.
+    return main menu buttons.
     """
+    await callback.message.delete()
     await callback.answer('Вы вернулись в главное меню')
     try:
         await state.clear()
