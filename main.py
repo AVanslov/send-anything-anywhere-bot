@@ -17,6 +17,7 @@ from app.handlers import (
     availible_routes,
     send_money,
     contact_developer,
+    menu,
 )
 
 load_dotenv()
@@ -39,6 +40,7 @@ async def main() -> None:
         availible_routes.availible_routes,
         send_money.send_money_router,
         contact_developer.contact_developer_router,
+        menu.menu_router,
     )
     await dp.start_polling(bot)
 

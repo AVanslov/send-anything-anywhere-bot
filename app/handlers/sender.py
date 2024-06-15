@@ -465,7 +465,7 @@ async def senders_data_transport(
     await callback.message.answer(
         message,
         reply_markup=await kb.make_inline_keyboard(
-            ['Редактировать объявление'], 2
+            ['Редактировать объявление', 'menu'], 1
         )
     )
     # сохранение полученных данны в БД

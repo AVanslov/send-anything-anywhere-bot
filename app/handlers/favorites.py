@@ -32,6 +32,6 @@ async def carrier_parcel_handler(
     )
     await callback.message.delete()
     await callback.message.answer(
-        'Избранноре',
+        'Избранное',  # GET запрос в БД на список объектов
         # reply_markup=await kb.years_calendar_keyboard()
     )
