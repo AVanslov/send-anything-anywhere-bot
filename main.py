@@ -8,6 +8,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
+from app.database.models import async_main
 from app.handlers import (
     start,
     sender,
@@ -26,6 +27,7 @@ TOKEN = getenv('BOT_TOKEN')
 
 
 async def main() -> None:
+    await async_main()
     bot = Bot(
         token=TOKEN,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML)

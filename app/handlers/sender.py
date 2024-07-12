@@ -12,6 +12,7 @@ from app.constants import (
     SIZE,
     TRANSPORT,
 )
+import app.database.requests as rq
 import app.keyboards as kb
 from app.states import SendersData
 
@@ -469,6 +470,24 @@ async def senders_data_transport(
         )
     )
     # сохранение полученных данны в БД
+    await rq.set_sender_add(
+        tg_id=callback.from_user.id,
+        delivery_date=data["delivery_date"],
+        departure_country=data["departure_country"],
+        departure_city=data["departure_city"],
+        departure_details=data["departure_details"],
+        arrival_country=data["arrival_country"],
+        arrival_city=data["arrival_city"],
+        arrival_details=data["arrival_details"],
+        type_of_reward=data["type_of_reward"],
+        type_of_reward_currency=data["type_of_reward_currency"],
+        type_of_reward_value=data["type_of_reward_value"],
+        type_of_reward_message='smth',
+        size=data["size"],
+        weight=data["weight"],
+        cargo_type=data["cargo_type"],
+        transport=data["transport"]
+        )
     await state.clear()
     await callback.message.answer(
         'Cписок подходящих объявлений',
@@ -476,24 +495,41 @@ async def senders_data_transport(
     # GET запрос в БД сортируем по рейтингу, количеству отзывов,
     # дата отправления (самая ближайшая к дате объявления - самая поздняя)
     # фильтруем по пункт отправления - пункт назначения
-
-    # for add in adds:
-    await callback.message.answer(
-        'Рейтинг: ⭐⭐⭐⭐⭐\n'
-        'Отзывов : 10\n'
-        'Выполнено доставок : 10\n'
-        'Маршрут: Белград - Стамбул - Пекин\n'
-        'Дата отправления: \n'
-        'Дата прибытия в Стамбул: \n'
-        'Дата прибытия в Пекин: \n'
-        'Допустимые габариты посылки: \n'
-        'Допустимая масса посылки: \n'
-        'Желаемое вознаграждение: \n'
-        'Допустимое содержимое посылки: ',
-        reply_markup=await kb.make_inline_keyboard(
-            ['Добавить в избранное', 'Отправить посылку'], 1
+    carrier_adds = await rq.get_carrier_add_items()
+    if carrier_adds:
+        for add in carrier_adds:
+            await callback.message.answer(
+                'Рейтинг: ⭐⭐⭐⭐⭐\n'
+                'Отзывов : 10\n'
+                'Выполнено доставок : 10\n'
+                'Маршрут: {departure_city}\n'
+                'Дата отправления: {delivery_date}\n'
+                'Дата прибытия в {arrival_city}: \n'
+                'Допустимые габариты посылки: {size}\n'
+                'Допустимая масса посылки: {weight}\n'
+                'Желаемое вознаграждение: {type_of_reward}\n'
+                'Допустимое содержимое посылки: {cargo_type}\n'
+                'Вид транспорта: {transport}\n'.format(
+                    departure_city=add.departure_city,
+                    arrival_city=add.arrival_city,
+                    delivery_date=add.delivery_date,
+                    size=add.size,
+                    weight=add.weight,
+                    type_of_reward=add.type_of_reward,
+                    cargo_type=add.cargo_type,
+                    transport=add.transport
+                ),
+                reply_markup=await kb.make_inline_keyboard(
+                    ['Добавить в избранное', 'Отправить посылку'], 1
+                )
+            )
+    else:
+        await callback.message.answer(
+            'Cписок подходящих объявлений.\n'
+            'Подходящие объявления не найдены,'
+            'Нажмите кнопку ниже "Подписаться"'
+            'и мы пришлем вам релевантные объявления, как только они появятся',
         )
-    )
 
     # пишем функцию, которая отправит уведомление перевозчику
 

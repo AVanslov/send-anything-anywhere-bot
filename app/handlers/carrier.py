@@ -12,6 +12,7 @@ from app.constants import (
     SIZE,
     TRANSPORT,
 )
+import app.database.requests as rq
 import app.keyboards as kb
 from app.states import CarrierData
 
@@ -428,6 +429,21 @@ async def senders_data_transport(
         )
 
     # сохранение полученных данны в БД
+    await rq.set_carrier_add(
+        tg_id=callback.from_user.id,
+        delivery_date=data["delivery_date"],
+        departure_country=data["departure_country"],
+        departure_city=data["departure_city"],
+        arrival_country=data["arrival_country"],
+        arrival_city=data["arrival_city"],
+        type_of_reward=data["type_of_reward"],
+        type_of_reward_currency=data["type_of_reward_currency"],
+        type_of_reward_value=data["type_of_reward_value"],
+        size=data["size"],
+        weight=data["weight"],
+        cargo_type=data["cargo_type"],
+        transport=data["transport"]
+        )
     await callback.message.answer(
         message,
         reply_markup=await kb.make_inline_keyboard(
@@ -435,9 +451,38 @@ async def senders_data_transport(
         )
     )
     await state.clear()
-    await callback.message.answer(
-        'Cписок подходящих объявлений.\n'
-        'Подходящие объявления не найдены,'
-        'Нажмите кнопку ниже "Подписаться"'
-        'и мы пришлем вам релевантные объявления, как только они появятся',
-    )
+    sender_adds = await rq.get_sender_add_items()
+    if sender_adds:
+        for add in sender_adds:
+            await callback.message.answer(
+                'Рейтинг: ⭐⭐⭐⭐⭐\n'
+                'Отзывов : 10\n'
+                'Отправлено посылок : 10\n'
+                'Маршрут: {departure_city}\n'
+                'Дата отправления: {delivery_date}\n'
+                'Дата прибытия в {arrival_city}: \n'
+                'Допустимые габариты посылки: {size}\n'
+                'Допустимая масса посылки: {weight}\n'
+                'Желаемое вознаграждение: {type_of_reward}\n'
+                'Допустимое содержимое посылки: {cargo_type}\n'
+                'Вид транспорта: {transport}\n'.format(
+                    departure_city=add.departure_city,
+                    arrival_city=add.arrival_city,
+                    delivery_date=add.delivery_date,
+                    size=add.size,
+                    weight=add.weight,
+                    type_of_reward=add.type_of_reward,
+                    cargo_type=add.cargo_type,
+                    transport=add.transport
+                ),
+                reply_markup=await kb.make_inline_keyboard(
+                    ['Добавить в избранное', 'Отправить посылку'], 1
+                )
+            )
+    else:
+        await callback.message.answer(
+            'Cписок подходящих объявлений.\n'
+            'Подходящие объявления не найдены,'
+            'Нажмите кнопку ниже "Подписаться"'
+            'и мы пришлем вам релевантные объявления, как только они появятся',
+        )
